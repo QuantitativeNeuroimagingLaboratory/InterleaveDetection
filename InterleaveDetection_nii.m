@@ -212,69 +212,77 @@ myFormat=' %s\t%f\t%E\n';
     [pks2,idx2]=findpeaks(rM(2:end));   % Find local mad of the original function (Exclude the first value as it is always "1")
     pks1=pks1*-1;                       % Restore original values to local minima by un-inverting
 
-    
-    % Examine The second derivative
-    % ---------------------------------------------------------------------
-    
-for n=1:length(idx1)    % For each local minimum found
-    
-    %
-    % IF
-    %
-    % CONDITION 1&2:
-    % the index of the peak is at least one less than the length of the
-    % array, AND the index of the peak is at least one greater than 1
-    % (If the peak is not the first or last value of the array)
-    %
-    % AND
-    %
-    % CONDITION 2:
-    % the magnitude of the peak is further away from the mean than a
-    % given threshold (1.25x larger)
-    %
-    %THEN
-    %
-    % take the geometric average of the significance (P-value) of this peak
-    % compared to its left and right neighbors using ANOVA
-    %
+if length(idx1)~=0
         
-    if (idx1(n)+1<=length(ddrM))&&(idx1(n)-1>=1)&&(abs(pks1(n)-mean(ddrM(3:end)))>abs(mean(ddrM(3:end)).*1.25))
-        ddrMin(n)=geomean([anova1(ddrMean(idx1(n)-1:idx1(n),:)',[],'off'),anova1(ddrMean(idx1(n):idx1(n)+1,:)',[],'off')]);
-   
-    %
-    % ELSE IF
-    %
-    % CONDITION 1:
-    % the peak is the last value in the array
-    %
-    % AND
-    %
-    % CONDITION 2:
-    % the magnitude of the peak is further away from the mean than a
-    % given threshold (1.25x larger)
-    %
-    % THEN
-    %
-    % Only compare it to the Left neighbor (The only one it has)
-    %
-    
-    elseif (idx1(n)+1>length(ddrM))&&(abs(pks1(n)-mean(ddrM(3:end)))>mean(ddrM(3:end)).*1.25)
-        ddrMin(n)=anova1(ddrMean(idx1(n)-1:idx1(n),:)',[],'off'); 
-        
-    %
-    % ELSE
-    % It must be the first value.  Due to the fact that every value in the
-    % first row of the original matrix all being one, these statistics are
-    % useless.  Ignore this peak.
-    %
-    
-    else
-        ddrMin(n)=1;
-    end
-end
 
-[pDif,Int]=min(ddrMin);     % Take the minimum (most significant) value for the interleave value (as determined by the second derivative)
-IntD=idx1(Int)-1;           % Correct for shifts in indexing due to derivatives and padding.
+        % Examine The second derivative
+        % ---------------------------------------------------------------------
+    for n=1:length(idx1)    % For each local minimum found
+
+        %
+        % IF
+        %
+        % CONDITION 1&2:
+        % the index of the peak is at least one less than the length of the
+        % array, AND the index of the peak is at least one greater than 1
+        % (If the peak is not the first or last value of the array)
+        %
+        % AND
+        %
+        % CONDITION 2:
+        % the magnitude of the peak is further away from the mean than a
+        % given threshold (1.25x larger)
+        %
+        %THEN
+        %
+        % take the geometric average of the significance (P-value) of this peak
+        % compared to its left and right neighbors using ANOVA
+        %
+
+        if (idx1(n)+1<=length(ddrM))&&(idx1(n)-1>=1)&&(abs(pks1(n)-mean(ddrM(3:end)))>abs(mean(ddrM(3:end)).*1.25))
+            ddrMin(n)=geomean([anova1(ddrMean(idx1(n)-1:idx1(n),:)',[],'off'),anova1(ddrMean(idx1(n):idx1(n)+1,:)',[],'off')]);
+
+        %
+        % ELSE IF
+        %
+        % CONDITION 1:
+        % the peak is the last value in the array
+        %
+        % AND
+        %
+        % CONDITION 2:
+        % the magnitude of the peak is further away from the mean than a
+        % given threshold (1.25x larger)
+        %
+        % THEN
+        %
+        % Only compare it to the Left neighbor (The only one it has)
+        %
+
+        elseif (idx1(n)+1>length(ddrM))&&(abs(pks1(n)-mean(ddrM(3:end)))>mean(ddrM(3:end)).*1.25)
+            ddrMin(n)=anova1(ddrMean(idx1(n)-1:idx1(n),:)',[],'off'); 
+
+        %
+        % ELSE
+        % It must be the first value.  Due to the fact that every value in the
+        % first row of the original matrix all being one, these statistics are
+        % useless.  Ignore this peak.
+        %
+
+        else
+            ddrMin(n)=1;
+        end
+    end
+    [pDif,Int]=min(ddrMin);     % Take the minimum (most significant) value for the interleave value (as determined by the second derivative)
+    IntD=idx1(Int)-1;           % Correct for shifts in indexing due to derivatives and padding.
+
+
+else
+    ddrMin=[-1]
+    pDif=1;
+    Int=-1;
+    Interleave=-1;
+end
 
 
 
@@ -283,59 +291,69 @@ IntD=idx1(Int)-1;           % Correct for shifts in indexing due to derivatives 
     % Examine The Original Averaged Temporal Correlation Matrix
     % ---------------------------------------------------------------------
 
-idx2(end+1)=1;  % The interleave may be '1', which wouldn't be picked up as a local peak, so include that value
-
-
-for n=1:length(idx2)    % for each local maximum found
-        
-    %
-    % IF
-    %
-    % CONDITION 1&2:
-    % the index of the peak is at least one less than the length of the
-    % array, AND the index of the peak is at least one greater than 1
-    % (If the peak is not the first or last value of the array)
-    %
-    %THEN
-    %
-    % take the geometric average of the significance (P-value) of this peak
-    % compared to its left and right neighbors using ANOVA
-    %
     
-    if (idx2(n)+2<=length(rM))&&(idx2(n)-1>=1)        
-        rMin(n)=geomean([anova1(rMean(idx2(n):idx2(n)+1,:)',[],'off'),anova1(rMean(idx2(n)+1:idx2(n)+2,:)',[],'off')]);
-        
-    %
-    % ELSE IF
-    %
-    % CONDITION 1:
-    % the peak is the last value in the array
-    %
-    % THEN
-    %
-    % Only compare it to the Left neighbor (The only one it has)
-    %
-        
-    elseif idx2(n)+2>length(rM)
-        rMin(n)=anova1(rMean(idx2(n):idx2(n)+1,:)',[],'off');
-        
-    %
-    % ELSE
-    % It must be the first value.  Due to the fact that every value in the
-    % first row of the original matrix all being one, the left most
-    % neighbor will unfairly skew the results.  Only compare to the right
-    % neighbor.
-    %   
-        
-    else
-        rMin(n)=anova1(rMean(idx2(n)+1:idx2(n)+2,:)',[],'off');
+if length(idx2)~=0
+
+    idx2(end+1)=1;  % The interleave may be '1', which wouldn't be picked up as a local peak, so include that value
+
+
+    for n=1:length(idx2)    % for each local maximum found
+
+        %
+        % IF
+        %
+        % CONDITION 1&2:
+        % the index of the peak is at least one less than the length of the
+        % array, AND the index of the peak is at least one greater than 1
+        % (If the peak is not the first or last value of the array)
+        %
+        %THEN
+        %
+        % take the geometric average of the significance (P-value) of this peak
+        % compared to its left and right neighbors using ANOVA
+        %
+
+        if (idx2(n)+2<=length(rM))&&(idx2(n)-1>=1)        
+            rMin(n)=geomean([anova1(rMean(idx2(n):idx2(n)+1,:)',[],'off'),anova1(rMean(idx2(n)+1:idx2(n)+2,:)',[],'off')]);
+
+        %
+        % ELSE IF
+        %
+        % CONDITION 1:
+        % the peak is the last value in the array
+        %
+        % THEN
+        %
+        % Only compare it to the Left neighbor (The only one it has)
+        %
+
+        elseif idx2(n)+2>length(rM)
+            rMin(n)=anova1(rMean(idx2(n):idx2(n)+1,:)',[],'off');
+
+        %
+        % ELSE
+        % It must be the first value.  Due to the fact that every value in the
+        % first row of the original matrix all being one, the left most
+        % neighbor will unfairly skew the results.  Only compare to the right
+        % neighbor.
+        %   
+
+        else
+            rMin(n)=anova1(rMean(idx2(n)+1:idx2(n)+2,:)',[],'off');
+        end
     end
+
+
+
+    [p,Int]=min(rMin);      % Take the minimum (most significant) value for the interleave value (as determined by the Original Matrix)
+    Interleave=idx2(Int);
+else
+    rMin=[-1]
+    p=1;
+    Int=-1;
+    Interleave=-1;
 end
 
-
-
-[p,Int]=min(rMin);      % Take the minimum (most significant) value for the interleave value (as determined by the Original Matrix)
-Interleave=idx2(Int);
 
     %% Compare Interleave Values and Decide on true interleave Value
     %----------------------------------------------------------------------
@@ -388,7 +406,7 @@ Interleave=idx2(Int);
 %% Plot and Save Figures for Analysis
 
 
-h=figure;
+h=figure('Position',[0,0,1000,1000]);
 
 subplot(2,6,1:3); imagesc(rcor); title(FileName);
 subplot(2,6,4:6); imagesc(rMean); title('rMean');
